@@ -170,6 +170,8 @@ func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
 		return response, err
 	}
 
+	//fmt.Println(string(response.Body))
+
 	if v != nil {
 		err = json.Unmarshal(response.Body, v)
 		if err != nil {
