@@ -3,6 +3,7 @@ package bitfinex
 import (
 	"fmt"
 	"path"
+	"time"
 )
 
 // OrderService manages the Order endpoint.
@@ -52,12 +53,16 @@ func (s *OrderService) Status(orderID int64) (o Order, err error) {
 }
 
 // All returns all orders for the authenticated account.
-func (s *OrderService) History(symbol string) (OrderSnapshot, error) {
+func (s *OrderService) History(symbol string, start, end time.Time, limit int) (OrderSnapshot, error) {
 	if symbol == "" {
 		return nil, fmt.Errorf("symbol cannot be empty")
 	}
 
-	req, err := s.client.newAuthenticatedRequest("POST", path.Join("orders", symbol, "hist"), nil)
+	data := map[string]interface{}{}
+	//data["start"] = start.Unix()*1000
+	data["end"] = end.Unix()*1000
+	data["limit"] = limit
+	req, err := s.client.newAuthenticatedRequest("POST", path.Join("orders", symbol, "hist"), data)
 	if err != nil {
 		return nil, err
 	}
