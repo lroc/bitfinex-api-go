@@ -4,6 +4,7 @@ package bitfinex
 import (
 	"crypto/hmac"
 	"crypto/sha512"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -32,6 +33,8 @@ type Client struct {
 	// Auth data
 	APIKey    string
 	APISecret string
+
+	ProxyAddr string
 
 	// Services
 	Pairs         *PairsService
@@ -149,13 +152,26 @@ func (c *Client) Auth(key string, secret string) *Client {
 	return c
 }
 
-var httpDo = func(req *http.Request) (*http.Response, error) {
-	return http.DefaultClient.Do(req)
+var httpDo = func(req *http.Request, proxyAddr string) (*http.Response, error) {
+	transport := &http.Transport{}
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //set ssl
+
+	if proxyAddr != `` {
+		urlI := url.URL{}
+		urlProxy, _ := urlI.Parse(proxyAddr)
+		transport.Proxy = http.ProxyURL(urlProxy) // set proxy
+	}
+
+	c := &http.Client{
+		Transport: transport,
+	}
+	//return http.DefaultClient.Do(req)
+	return c.Do(req)
 }
 
 // Do executes API request created by NewRequest method or custom *http.Request.
 func (c *Client) do(req *http.Request, v interface{}) (*Response, error) {
-	resp, err := httpDo(req)
+	resp, err := httpDo(req, c.ProxyAddr)
 
 	if err != nil {
 		return nil, err
